@@ -251,15 +251,15 @@ paket-files/
 .idea/
 *.sln.iml
 
-# MesSystem
-src/MesSystem.Web/Logs/*
-src/MesSystem.Web.Host/Logs/*
-src/MesSystem.AuthServer/Logs/*
-src/MesSystem.HttpApi.Host/Logs/*
-src/MesSystem.HttpApi.Host/Logs/*
-src/MesSystem.DbMigrator/Logs/*
-src/MesSystem.Blazor.Server/Logs/*
-src/MesSystem.Blazor.Server.Tiered/Logs/*
+# MyProject
+src/MyProject.Web/Logs/*
+src/MyProject.Web.Host/Logs/*
+src/MyProject.AuthServer/Logs/*
+src/MyProject.HttpApi.Host/Logs/*
+src/MyProject.HttpApi.Host/Logs/*
+src/MyProject.DbMigrator/Logs/*
+src/MyProject.Blazor.Server/Logs/*
+src/MyProject.Blazor.Server.Tiered/Logs/*
 
 # Use abp install-libs to restore.
 **/wwwroot/libs/*
