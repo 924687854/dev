@@ -20,7 +20,8 @@
 7. 如果需求不清晰，先反问，不猜测。
 8. 除本文件外，其他代码改动都必须先经过用户同意。
 9. 当用户提出的新要求与本文档已确认的规则或决策冲突时，必须主动提醒用户，明确指出会与哪一条已确认内容冲突，待用户确认后再修改，不得默默覆盖或忽略。
-10. 采用“一个问题一个问题确认”的协作方式推进。
+10. 采用"一个问题一个问题确认"的协作方式推进。
+11. 严格按照 ABP 框架官方规范和项目已有约定执行，不确定的必须先问用户，不得自行假设或跳过。包括但不限于：表名前缀（当前项目为 App）、DbContext 配置方式、实体基类选择、仓储模式、权限定义方式等。
 
 ## 3. 当前项目背景
 
@@ -321,9 +322,13 @@ ERP 入口额外必填：
 
 ### 当前未开始事项
 
-1. 尚未开始任何业务代码开发。
-2. 尚未开始数据库迁移、接口、测试文件修改。
-3. 尚未确认编码前落地方案，如模块划分、实体划分、开发顺序等。
+1. 第 6 步：测试尚未开始（单元测试、应用服务测试、集成测试）。
+2. 分解逻辑（由用户手动触发，从工艺路线生成工序明细行快照）尚未实现。
+3. 状态联动逻辑（工序开工→工单进行中、全部完工→工单已完成、回退规则）尚未实现。
+4. 工艺路线修改日志记录逻辑尚未实现。
+5. 工艺路线版本链"保存即结算"逻辑尚未实现。
+6. HttpApi 层尚未新增显式 Controller（ABP 自动 API Controller 已可用）。
+7. 接口平台日志是否首版落库尚未确认。
 
 ## 8. 当前约束
 
@@ -335,17 +340,17 @@ ERP 入口额外必填：
 
 ## 9. 编码前待确认问题列表
 
-当前业务规则已基本确认完毕。进入编码前建议按顺序确认以下问题：
+当前业务规则已基本确认完毕。已确认的问题标记为 ~~删除线~~。
 
-1. ABP 分层下的模块划分：是否新建独立 MES 模块/命名空间，还是放入现有业务模块。
-2. 实体划分：生产工单、工序明细行、工艺路线变更日志是否作为首批实体落地。
-3. 主数据依赖：当前项目若不存在产品、生产组织、工艺路线主数据实体，首版是否需要补充最小主数据模型，还是先预留接口/仓储抽象。
-4. 单位校验：单位首版是否仅做必填校验，还是需要校验计量单位主数据存在及产品单位关系。
+1. ~~ABP 分层下的模块划分：是否新建独立 MES 模块/命名空间，还是放入现有业务模块。~~ 已确认：不新建独立模块，在现有项目内用目录/命名空间组织，去掉 Mes 前缀。
+2. ~~实体划分：生产工单、工序明细行、工艺路线变更日志是否作为首批实体落地。~~ 已确认：首批落地 ProductionOrder、ProductionOrderOperation、ProductionOrderRouteChangeLog + 4 个主数据实体。
+3. ~~主数据依赖：当前项目若不存在产品、生产组织、工艺路线主数据实体，首版是否需要补充最小主数据模型。~~ 已确认：先做最小主数据模型。
+4. ~~单位校验：单位首版是否仅做必填校验。~~ 已确认：只做必填。
 5. 接口平台日志：接口平台层是否在首版同步落库实现，还是先在 ERP 入口保留接口系统标识、RequestId 的接收和传递能力。
-6. ERP 源单唯一约束：根据当前项目实际数据库类型确认非空唯一约束的实现方式。
-7. 枚举与状态命名：确认代码中的英文枚举名、数据库存储方式和展示映射。
-8. 工单号生成规则：确认 MES 工单号编码规则、前缀、流水方式和并发策略。
-9. 开发顺序：建议先领域模型，再状态机/领域服务，再应用服务和接口，最后补迁移和测试；具体需用户确认。
+6. ~~ERP 源单唯一约束：根据当前项目实际数据库类型确认非空唯一约束的实现方式。~~ 已确认：MySQL UNIQUE 索引天然允许多个 NULL。
+7. ~~枚举与状态命名：确认代码中的英文枚举名、数据库存储方式和展示映射。~~ 已确认：ProductionOrderStatus（int）、ProductionOrderOperationStatus（int）、RouteChangeSource（int）。
+8. ~~工单号生成规则：确认 MES 工单号编码规则、前缀、流水方式和并发策略。~~ 已确认：PO+yyyyMMdd+4位流水，基于当日最大号递增。
+9. ~~开发顺序：建议先领域模型，再状态机/领域服务，再应用服务和接口，最后补迁移和测试。~~ 已按此顺序执行至第 5 步完成。
 
 ## 10. ABP 编码实施指引（后续 AI 必读）
 
@@ -686,7 +691,7 @@ ERP 入口额外必填：
 
 ### 11.1 当前实施状态
 
-当前状态：尚未开始任何业务代码开发。
+当前状态：第 5 步（应用服务与 DTO）已完成，待进入第 6 步（测试）。
 
 已完成：
 
@@ -694,50 +699,106 @@ ERP 入口额外必填：
 - ABP 编码实施指引确认。
 - 每一步需向用户确认的协作规则确认。
 - AI 接续交接机制确认。
+- 第 0 步：项目结构扫描已完成。
+- 第 1 步：模块与命名空间方案已确认（不新建独立 ABP 模块，去掉 Mes 前缀，在现有项目内用目录/命名空间组织）。
+- 第 2 步：领域模型最小闭环已落地（3 个枚举 + 3 个实体，编译通过）。
+- 第 3 步：EF Core 映射与迁移已完成（3 张表映射、索引配置、迁移生成并应用到数据库）。
+- 第 4 步：建单领域服务 + 最小主数据已完成（4 个主数据实体、4 张主数据表、工单号生成器、建单领域服务，编译通过，数据库已更新）。
+- 第 5 步：应用服务与 DTO 已完成（权限定义、DTO、IAppService 接口、AppService 实现、AutoMapper 配置，编译通过）。
 
 未完成：
 
-- 尚未扫描真实项目代码结构。
-- 尚未确认模块和命名空间方案。
-- 尚未新增实体、枚举、领域服务、应用服务、EF Core 映射、迁移或测试。
-- 尚未执行后端 build、单元测试或集成测试。
+- 第 6 步：测试。
+- 尚未执行单元测试或集成测试。
 
 ### 11.2 当前所在步骤
 
-当前位于：第 0 步之前，等待用户授权开始扫描项目结构。
+当前位于：第 5 步已完成，待进入第 6 步（测试）。
 
-下一步建议：执行第 0 步：扫描项目结构。
+下一步建议：执行第 6 步：测试。
 
-第 0 步只读取代码，不修改代码。
-
-扫描完成后，AI 需要向用户汇报：
-
-1. 实际 ABP 分层结构。
-2. 项目命名空间。
-3. DbContext 位置。
-4. 实体基类和审计基类使用方式。
-5. 是否已有产品、生产组织、工艺路线主数据。
-6. 是否已有错误码、权限、AutoMapper、Controller 风格。
-7. 推荐的第 1 步模块与命名空间方案。
+第 6 步需要向用户确认：测试范围（单元测试、应用服务测试、集成测试分别做到什么程度）。
 
 ### 11.3 已完成代码改动
 
-当前尚未开始业务代码开发。
+当前已完成第 0～5 步代码改动。
 
 已修改文件：
 
 - `mes-workorder-context.md`
+- `src/MyProject.EntityFrameworkCore/EntityFrameworkCore/MyProjectDbContext.cs` — 新增 DbSet 和实体映射配置（含主数据）
+- `src/MyProject.Application.Contracts/MyProject.Application.Contracts.csproj` — 新增 Volo.Abp.Ddd.Application.Contracts 包引用
+- `src/MyProject.Application/MyProject.Application.csproj` — 新增 Volo.Abp.Ddd.Application、Volo.Abp.Authorization 包引用，FrameworkReference Microsoft.AspNetCore.App
+- `src/MyProject.Application/MyProjectApplicationAutoMapperProfile.cs` — 新增所有实体→DTO 映射
+- `src/MyProject.Domain.Shared/Localization/MyProject/zh-Hans.json` — 新增权限本地化文本
+- `src/MyProject.Domain.Shared/Localization/MyProject/en.json` — 新增权限本地化文本
+
+新增文件（第 2 步）：
+
+- `src/MyProject.Domain.Shared/Enums/ProductionOrderStatus.cs` — 生产工单状态枚举
+- `src/MyProject.Domain.Shared/Enums/ProductionOrderOperationStatus.cs` — 工序明细行状态枚举
+- `src/MyProject.Domain.Shared/Enums/RouteChangeSource.cs` — 变更来源枚举
+- `src/MyProject.Domain/Entities/ProductionOrder.cs` — 生产工单聚合根
+- `src/MyProject.Domain/Entities/ProductionOrderOperation.cs` — 工序明细行子实体
+- `src/MyProject.Domain/Entities/ProductionOrderRouteChangeLog.cs` — 工艺路线变更日志
+
+新增文件（第 3 步）：
+
+- `src/MyProject.EntityFrameworkCore/Migrations/20260722132523_AddProductionOrderEntities.cs` — 迁移文件（表名使用 App 前缀，符合 ABP 规范）
+- `src/MyProject.EntityFrameworkCore/Migrations/20260722132523_AddProductionOrderEntities.Designer.cs` — 迁移设计器文件
+- `src/MyProject.EntityFrameworkCore/Migrations/MyProjectDbContextModelSnapshot.cs` — 模型快照（已更新）
+
+新增文件（第 4 步 - 主数据实体）：
+
+- `src/MyProject.Domain/Entities/Product.cs` — 产品主数据
+- `src/MyProject.Domain/Entities/ProductionOrganization.cs` — 生产组织主数据
+- `src/MyProject.Domain/Entities/ProcessRoute.cs` — 工艺路线主数据
+- `src/MyProject.Domain/Entities/ProcessRouteOperation.cs` — 工艺路线工序子实体
+
+新增文件（第 4 步 - 领域服务）：
+
+- `src/MyProject.Domain/Services/IOrderNumberGenerator.cs` — 工单号生成器接口
+- `src/MyProject.Domain/Services/OrderNumberGenerator.cs` — 工单号生成器实现（PO+yyyyMMdd+4位流水）
+- `src/MyProject.Domain/Services/ProductionOrderManager.cs` — 建单领域服务
+
+新增文件（第 4 步 - 迁移）：
+
+- `src/MyProject.EntityFrameworkCore/Migrations/20260722134540_AddMasterDataEntities.cs` — 主数据表迁移
+- `src/MyProject.EntityFrameworkCore/Migrations/20260722134540_AddMasterDataEntities.Designer.cs` — 迁移设计器
+
+新增文件（第 5 步 - 权限）：
+
+- `src/MyProject.Application.Contracts/Permissions/MyProjectPermissions.cs` — 权限名称常量（生产工单、产品、生产组织、工艺路线）
+- `src/MyProject.Application.Contracts/Permissions/MyProjectPermissionDefinitionProvider.cs` — 权限定义提供者
+
+新增文件（第 5 步 - DTO）：
+
+- `src/MyProject.Application.Contracts/Dtos/ProductionOrderDto.cs` — 生产工单输出 DTO + 工序明细输出 DTO
+- `src/MyProject.Application.Contracts/Dtos/CreateProductionOrderDto.cs` — 手工创建输入 DTO
+- `src/MyProject.Application.Contracts/Dtos/CreateProductionOrderFromErpDto.cs` — ERP 接口创建输入 DTO
+- `src/MyProject.Application.Contracts/Dtos/GetProductionOrderListDto.cs` — 生产工单列表查询 DTO
+- `src/MyProject.Application.Contracts/Dtos/ProductDtos.cs` — 产品 DTO + CreateUpdateProductDto
+- `src/MyProject.Application.Contracts/Dtos/ProductionOrganizationDtos.cs` — 生产组织 DTO + CreateUpdateDto
+- `src/MyProject.Application.Contracts/Dtos/ProcessRouteDtos.cs` — 工艺路线 DTO + CreateUpdateDto + 工序 DTO
+
+新增文件（第 5 步 - IAppService 接口）：
+
+- `src/MyProject.Application.Contracts/IProductionOrderAppService.cs` — 生产工单应用服务接口（自定义，含 Create/CreateFromErp/Get/GetList）
+- `src/MyProject.Application.Contracts/IProductAppService.cs` — 产品应用服务接口（继承 ICrudAppService）
+- `src/MyProject.Application.Contracts/IProductionOrganizationAppService.cs` — 生产组织应用服务接口（继承 ICrudAppService）
+- `src/MyProject.Application.Contracts/IProcessRouteAppService.cs` — 工艺路线应用服务接口（继承 ICrudAppService）
+
+新增文件（第 5 步 - AppService 实现）：
+
+- `src/MyProject.Application/ProductionOrderAppService.cs` — 生产工单应用服务（调用领域服务，[Authorize] 权限控制）
+- `src/MyProject.Application/ProductAppService.cs` — 产品应用服务（继承 CrudAppService，权限策略名）
+- `src/MyProject.Application/ProductionOrganizationAppService.cs` — 生产组织应用服务（继承 CrudAppService）
+- `src/MyProject.Application/ProcessRouteAppService.cs` — 工艺路线应用服务（继承 CrudAppService，重写 Create/Update 处理工序子集合）
 
 未修改：
 
-- Domain 层。
-- Domain.Shared 层。
-- Application.Contracts 层。
-- Application 层。
-- EntityFrameworkCore 层。
 - HttpApi 层。
 - 测试项目。
-- 数据库迁移文件。
 
 后续每次编码后，必须按以下模板追加记录：
 
@@ -764,40 +825,81 @@ ERP 入口额外必填：
 | 文件路径 | 状态 | 说明 | 是否已测试 |
 |---|---|---|---|
 | `mes-workorder-context.md` | 已修改 | 记录 MES 工单模块需求、ABP 实施指引和交接规则 | 不适用 |
+| `src/MyProject.Domain.Shared/Enums/ProductionOrderStatus.cs` | 新增 | 生产工单状态枚举 | 编译通过 |
+| `src/MyProject.Domain.Shared/Enums/ProductionOrderOperationStatus.cs` | 新增 | 工序明细行状态枚举 | 编译通过 |
+| `src/MyProject.Domain.Shared/Enums/RouteChangeSource.cs` | 新增 | 变更来源枚举 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProductionOrder.cs` | 新增 | 生产工单聚合根 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProductionOrderOperation.cs` | 新增 | 工序明细行子实体 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProductionOrderRouteChangeLog.cs` | 新增 | 工艺路线变更日志 | 编译通过 |
+| `src/MyProject.EntityFrameworkCore/EntityFrameworkCore/MyProjectDbContext.cs` | 已修改 | 新增 DbSet 和实体映射配置 | 编译通过 |
+| `src/MyProject.EntityFrameworkCore/Migrations/20260722132523_AddProductionOrderEntities.cs` | 新增 | 生产工单表迁移（App前缀，ABP规范） | 数据库已更新 |
+| `src/MyProject.EntityFrameworkCore/Migrations/20260722132523_AddProductionOrderEntities.Designer.cs` | 新增 | 迁移设计器 | 不适用 |
+| `src/MyProject.EntityFrameworkCore/Migrations/MyProjectDbContextModelSnapshot.cs` | 已修改 | 模型快照更新 | 不适用 |
+| `src/MyProject.Domain/Entities/Product.cs` | 新增 | 产品主数据 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProductionOrganization.cs` | 新增 | 生产组织主数据 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProcessRoute.cs` | 新增 | 工艺路线主数据 | 编译通过 |
+| `src/MyProject.Domain/Entities/ProcessRouteOperation.cs` | 新增 | 工艺路线工序子实体 | 编译通过 |
+| `src/MyProject.Domain/Services/IOrderNumberGenerator.cs` | 新增 | 工单号生成器接口 | 编译通过 |
+| `src/MyProject.Domain/Services/OrderNumberGenerator.cs` | 新增 | 工单号生成器实现 | 编译通过 |
+| `src/MyProject.Domain/Services/ProductionOrderManager.cs` | 新增 | 建单领域服务 | 编译通过 |
+| `src/MyProject.EntityFrameworkCore/Migrations/20260722134540_AddMasterDataEntities.cs` | 新增 | 主数据表迁移 | 数据库已更新 |
+| `src/MyProject.EntityFrameworkCore/Migrations/20260722134540_AddMasterDataEntities.Designer.cs` | 新增 | 迁移设计器 | 不适用 |
+| `src/MyProject.Application.Contracts/Permissions/MyProjectPermissions.cs` | 新增 | 权限名称常量 | 编译通过 |
+| `src/MyProject.Application.Contracts/Permissions/MyProjectPermissionDefinitionProvider.cs` | 新增 | 权限定义提供者 | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/ProductionOrderDto.cs` | 新增 | 生产工单+工序输出DTO | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/CreateProductionOrderDto.cs` | 新增 | 手工创建输入DTO | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/CreateProductionOrderFromErpDto.cs` | 新增 | ERP创建输入DTO | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/GetProductionOrderListDto.cs` | 新增 | 列表查询DTO | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/ProductDtos.cs` | 新增 | 产品DTO+CreateUpdate | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/ProductionOrganizationDtos.cs` | 新增 | 生产组织DTO+CreateUpdate | 编译通过 |
+| `src/MyProject.Application.Contracts/Dtos/ProcessRouteDtos.cs` | 新增 | 工艺路线DTO+CreateUpdate+工序 | 编译通过 |
+| `src/MyProject.Application.Contracts/IProductionOrderAppService.cs` | 新增 | 生产工单应用服务接口 | 编译通过 |
+| `src/MyProject.Application.Contracts/IProductAppService.cs` | 新增 | 产品应用服务接口(ICrudAppService) | 编译通过 |
+| `src/MyProject.Application.Contracts/IProductionOrganizationAppService.cs` | 新增 | 生产组织应用服务接口 | 编译通过 |
+| `src/MyProject.Application.Contracts/IProcessRouteAppService.cs` | 新增 | 工艺路线应用服务接口 | 编译通过 |
+| `src/MyProject.Application/ProductionOrderAppService.cs` | 新增 | 生产工单应用服务实现 | 编译通过 |
+| `src/MyProject.Application/ProductAppService.cs` | 新增 | 产品应用服务(CrudAppService) | 编译通过 |
+| `src/MyProject.Application/ProductionOrganizationAppService.cs` | 新增 | 生产组织应用服务(CrudAppService) | 编译通过 |
+| `src/MyProject.Application/ProcessRouteAppService.cs` | 新增 | 工艺路线应用服务(CrudAppService) | 编译通过 |
+| `src/MyProject.Application/MyProjectApplicationAutoMapperProfile.cs` | 已修改 | 新增实体→DTO映射 | 编译通过 |
+| `src/MyProject.Application.Contracts/MyProject.Application.Contracts.csproj` | 已修改 | 新增Ddd.Application.Contracts包引用 | 编译通过 |
+| `src/MyProject.Application/MyProject.Application.csproj` | 已修改 | 新增Ddd.Application+Authorization包+FrameworkReference | 编译通过 |
+| `src/MyProject.Domain.Shared/Localization/MyProject/zh-Hans.json` | 已修改 | 新增权限本地化 | 编译通过 |
+| `src/MyProject.Domain.Shared/Localization/MyProject/en.json` | 已修改 | 新增权限本地化 | 编译通过 |
 
 后续每次新增、修改、删除业务代码文件后，必须同步更新此表。
 
 ### 11.5 当前阻塞问题
 
-1. 尚未扫描真实项目结构。
-   - 影响：无法确定实际项目名、命名空间、DbContext、实体基类和代码风格。
-   - 下一步：执行第 0 步代码结构扫描。
+无阻塞性问题。
 
-2. 尚未确认主数据现状。
-   - 影响：生产工单创建时产品编码、生产组织、工艺路线匹配无法确定依赖对象。
-   - 下一步：扫描代码中是否已有产品、组织、工艺路线相关实体或服务。
+### 11.5.1 技术债务与待改进项
 
-3. 尚未确认数据库类型。
-   - 影响：ERP 源单据 id 非空唯一约束实现方式暂不能确定。
-   - 下一步：扫描 EF Core provider 或项目配置。
-
-4. 尚未确认工单号生成规则。
-   - 影响：生产工单创建逻辑无法完整落地。
-   - 下一步：编码前向用户确认编码规则、前缀、流水方式和并发策略。
+1. **Product/ProductionOrganization 实体缺少 Update 方法**：当前 Update 操作在 AppService 中直接 new 新实体替换，不符合 DDD 规范（应通过实体方法修改字段）。首版暂时可用，后续需补充实体 Update 方法。
+2. **ProcessRoute Update 同样存在重建问题**：ProcessRouteAppService.UpdateAsync 中清空 Operations 再重建，而非通过实体方法操作集合，不符合 DDD 规范。
+3. **OrderNumberGenerator 并发安全**：当前实现基于查询当日最大号递增，高并发下可能产生重复号。首版可接受，后续需加唯一约束或分布式锁。
+4. **ProductionOrderAppService.GetListAsync 未 Include Operations**：列表查询未加载工序明细行，ProductionOrderDto 中无 Operations 集合字段。如需列表中展示工序信息，需后续补充。
+5. **ProductionOrderDto 缺少 Operations 集合**：输出 DTO 中未包含工序明细行集合，需后续补充。
+6. **CrudAppService 基类与自定义接口混用**：主数据用 CrudAppService（权限通过 PolicyName 控制），生产工单用自定义接口（权限通过 [Authorize] 特性控制）。两种风格并存，后续可考虑统一。
+7. **MyProject.Application.csproj 新增了 FrameworkReference Microsoft.AspNetCore.App**：这使 Application 层依赖 ASP.NET Core，虽然功能正常但不符合 ABP 理想分层（Application 层应可脱离 Web 运行）。ABP 官方模板中 Application 层通过 Volo.Abp.Authorization 包间接引用。当前为编译通过临时方案，后续可考虑移除 FrameworkReference 改用更轻量的引用方式。
 
 ### 11.6 测试与验证记录
 
-当前尚未开始业务代码开发，因此尚未执行后端 build、单元测试或集成测试。
+第 2 步至第 5 步完成后已执行编译验证和数据库更新。
 
 已执行：
 
 - 文档结构检查。
 - 旧术语残留检查。
 - ABP 实施指引章节完整性检查。
+- `dotnet build`：编译通过，零错误。
+- `dotnet ef migrations add AddProductionOrderEntities`：生产工单表迁移生成成功。
+- `dotnet ef database update`：生产工单表数据库更新成功。
+- `dotnet ef migrations add AddMasterDataEntities`：主数据表迁移生成成功。
+- `dotnet ef database update`：主数据表数据库更新成功。
 
 未执行：
 
-- `dotnet build`
 - 单元测试
 - 集成测试
 
@@ -823,7 +925,7 @@ ERP 入口额外必填：
 2. 首版只做生产工单。
 3. 不设置独立工序工单单据。
 4. 工序以生产工单工序明细行存在。
-5. “分解”指在生产工单内生成工序明细行。
+5. "分解"指在生产工单内生成工序明细行。
 6. 建单成功后状态为已下达。
 7. ERP 来单默认已下达。
 8. 创建时自动匹配工艺路线，匹配不到仍允许建单。
@@ -837,20 +939,33 @@ ERP 入口额外必填：
 16. 除本文档外，任何代码修改都必须先得到用户确认。
 17. 后续 AI 每一步都必须先向用户确认。
 18. 用户每次会提供最新代码给 AI 读取，不需要记录版本控制信息。
+19. 不新建独立 ABP 模块，在现有项目内用目录/命名空间组织。
+20. 去掉 Mes 前缀：表名、类名、目录/命名空间都不用 Mes。
+21. 枚举命名去掉 Work：ProductionOrderStatus、ProductionOrderOperationStatus。
+22. 首批实体确认：ProductionOrder、ProductionOrderOperation、ProductionOrderRouteChangeLog。
+23. 数据库为 MySQL（Pomelo 9.0.0），连接 localhost:3306/MySystem。
+24. 严格按照 ABP 框架规范执行，不确定时必须先问用户。
+25. 业务表名使用 App 前缀（MyProjectConsts.DbTablePrefix = "App"），表名为 AppProductionOrders、AppProductionOrderOperations、AppProductionOrderRouteChangeLogs。
+26. 主数据首版先做最小模型（Product、ProductionOrganization、ProcessRoute + ProcessRouteOperation），包含基础字段。
+27. 单位首版只做必填校验，不校验计量单位主数据。
+28. 工单号格式：PO + yyyyMMdd + 4位流水号（如 PO202607220001），基于当日最大号递增。
+29. Guid 为主键（内码），业务编码（如产品编码、工艺路线号）为编码，两者分离。
+30. 手工和ERP创建放同一个 AppService，通过不同方法区分入口。
+31. 需要 ABP 权限控制。
+32. 主数据需要 CRUD 应用服务。
+33. 主数据 AppService 继承 ABP 标准 CrudAppService，接口继承 ICrudAppService（ABP 9.3.0 无 IAsyncCrudAppService，只有 ICrudAppService）。
+34. [Authorize] 属性来自 Microsoft.AspNetCore.Authorization，Application 项目需 FrameworkReference Microsoft.AspNetCore.App。
 
 ### 11.8 当前待用户确认问题
 
-1. 是否开始第 0 步：扫描项目结构。
-2. MES 工单模块放在哪个命名空间。
-3. 是否新建独立 MES 模块，还是放入现有模块。
-4. 产品、生产组织、工艺路线主数据如果不存在，首版如何处理。
-5. 单位是否只做必填，还是校验计量单位主数据。
-6. 工单号生成规则。
-7. 枚举数据库存储方式。
-8. ERP 源单据 id 非空唯一索引实现方式。
-9. 接口平台日志是否首版落库。
-10. 首版是否包含工艺路线变更日志实体落库。
-11. 首版测试范围：单元测试、应用服务测试、集成测试分别做到什么程度。
+1. ~~产品、生产组织、工艺路线主数据如果不存在，首版如何处理。~~ 已确认：先做最小主数据模型。
+2. ~~单位是否只做必填，还是校验计量单位主数据。~~ 已确认：只做必填。
+3. ~~工单号生成规则。~~ 已确认：PO+yyyyMMdd+4位流水。
+4. ~~枚举数据库存储方式（int 还是 string）。~~ 已确认：int。
+5. ~~ERP 源单据 id 唯一索引实现方式（MySQL 下）。~~ 已确认：MySQL UNIQUE 索引天然允许多个 NULL。
+6. 接口平台日志是否首版落库。
+7. 首版测试范围：单元测试、应用服务测试、集成测试分别做到什么程度。
+8. ~~是否开始第 5 步：应用服务与 DTO。~~ 已完成。
 
 ### 11.9 下一位 AI 接手时必须先做的事
 
@@ -862,16 +977,12 @@ ERP 入口额外必填：
 4. 如果一致，继续当前步骤。
 5. 如果不一致，暂停并向用户说明差异。
 6. 未经用户确认，不得修改任何业务代码。
-7. 当前建议下一步是请求用户确认是否开始第 0 步：扫描项目结构。
+7. 当前建议下一步是执行第 6 步：测试。
 
 ### 11.10 下一位 AI 建议开场白
 
 ```text
-我已阅读 mes-workorder-context.md。当前 MES 工单模块尚未开始业务代码开发，文档已确认业务规则、ABP 实施指引、逐步确认机制和交接机制。
-
-当前建议执行第 0 步：扫描项目结构。本步只读取代码，不修改代码。扫描完成后，我会向你汇报 ABP 分层结构、命名空间、DbContext、实体基类、主数据现状和第 1 步模块划分建议。
-
-请确认是否开始第 0 步。
+我已阅读 mes-workorder-context.md。当前 MES 工单模块第 5 步（应用服务与 DTO）已完成。数据库中已有 7 张业务表，领域服务和应用服务层已就绪。权限定义（4 组权限）、DTO（7 个文件）、IAppService 接口（4 个）、AppService 实现（4 个，主数据用 CrudAppService 基类）、AutoMapper 映射已配置完成。编译通过，0 错误。下一步建议执行第 6 步：测试。请确认测试范围。
 ```
 
 ### 11.11 暂停前交接模板
@@ -907,6 +1018,58 @@ ERP 入口额外必填：
 
 下一位 AI 接手后的第一句话：
 ```
+
+#### 暂停交接记录：2026-07-22 23:30
+
+本次开始时所在步骤：第 0 步（项目结构扫描）
+
+本次目标：全面接手项目，验证文档与代码一致性，继续推进实施
+
+用户本次确认内容：
+- 不新建独立 ABP 模块，去掉 Mes 前缀
+- 枚举命名去掉 Work
+- 主数据先做最小模型
+- 单位只做必填
+- 工单号格式 PO+yyyyMMdd+4位流水
+- 手工和ERP放同一个 AppService
+- 需要权限控制
+- 主数据需要 CRUD
+- 严格按照 ABP 规范
+
+本次完成内容：
+- 第 0 步：扫描项目结构（已有 ABP 骨架，无 MES 业务代码）
+- 第 1 步：确认模块与命名空间方案
+- 第 2 步：领域模型最小闭环（3 枚举 + 3 实体）
+- 第 3 步：EF Core 映射与迁移（7 张业务表，App 前缀）
+- 第 4 步：建单领域服务 + 最小主数据（4 主数据实体 + 领域服务 + 工单号生成器）
+- 第 5 步：应用服务与 DTO（权限 + DTO + IAppService + AppService + AutoMapper）
+- 修正：文件名 ProductDto.cs → ProductionOrderDto.cs
+
+本次新增文件：见 11.3 节和 11.4 节完整清单
+
+本次修改文件：见 11.3 节和 11.4 节完整清单
+
+本次删除文件：无
+
+本次未完成内容：
+- 第 6 步：测试
+- 分解逻辑
+- 状态联动逻辑
+- 工艺路线修改日志记录
+- 工艺路线版本链"保存即结算"
+
+当前错误 / 风险 / 不确定点：
+- 无编译错误
+- 技术债务见 11.5.1 节（7 项）
+- 接口平台日志首版是否落库未确认
+
+已执行测试：编译验证（0 错误）
+
+测试结果：编译通过
+
+下一步建议：执行第 6 步测试，需用户确认测试范围（建议先做单元测试+应用服务测试，集成测试后续再加）
+
+下一位 AI 接手后的第一句话：我已阅读 mes-workorder-context.md。当前 MES 工单模块第 5 步（应用服务与 DTO）已完成，编译通过。下一步是第 6 步测试，需确认测试范围。请确认是否开始。
 
 ## 12. 后续执行原则
 

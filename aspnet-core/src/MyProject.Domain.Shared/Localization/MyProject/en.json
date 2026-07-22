@@ -4,6 +4,22 @@
     "AppName": "MyProject",
     "Menu:Home": "Home",
     "Welcome": "Welcome",
-    "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io."
+    "LongWelcomeMessage": "Welcome to the application. This is a startup project based on the ABP framework. For more information, visit abp.io.",
+    "Permission:MyProject": "MyProject",
+    "Permission:ProductionOrder": "Production Order",
+    "Permission:ProductionOrder.Create": "Create",
+    "Permission:ProductionOrder.Read": "Read",
+    "Permission:Product": "Product",
+    "Permission:Product.Create": "Create",
+    "Permission:Product.Update": "Edit",
+    "Permission:Product.Delete": "Delete",
+    "Permission:ProductionOrganization": "Production Organization",
+    "Permission:ProductionOrganization.Create": "Create",
+    "Permission:ProductionOrganization.Update": "Edit",
+    "Permission:ProductionOrganization.Delete": "Delete",
+    "Permission:ProcessRoute": "Process Route",
+    "Permission:ProcessRoute.Create": "Create",
+    "Permission:ProcessRoute.Update": "Edit",
+    "Permission:ProcessRoute.Delete": "Delete"
   }
 }

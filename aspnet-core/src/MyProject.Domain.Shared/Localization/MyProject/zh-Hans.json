@@ -4,6 +4,22 @@
     "AppName": "MyProject",
     "Menu:Home": "首页",
     "Welcome": "欢迎",
-    "LongWelcomeMessage": "欢迎使用本应用程序。这是一个基于 ABP 框架的启动项目。更多信息，请访问 abp.io。"
+    "LongWelcomeMessage": "欢迎使用本应用程序。这是一个基于 ABP 框架的启动项目。更多信息，请访问 abp.io。",
+    "Permission:MyProject": "MyProject",
+    "Permission:ProductionOrder": "生产工单",
+    "Permission:ProductionOrder.Create": "创建",
+    "Permission:ProductionOrder.Read": "查看",
+    "Permission:Product": "产品",
+    "Permission:Product.Create": "创建",
+    "Permission:Product.Update": "编辑",
+    "Permission:Product.Delete": "删除",
+    "Permission:ProductionOrganization": "生产组织",
+    "Permission:ProductionOrganization.Create": "创建",
+    "Permission:ProductionOrganization.Update": "编辑",
+    "Permission:ProductionOrganization.Delete": "删除",
+    "Permission:ProcessRoute": "工艺路线",
+    "Permission:ProcessRoute.Create": "创建",
+    "Permission:ProcessRoute.Update": "编辑",
+    "Permission:ProcessRoute.Delete": "删除"
   }
 }

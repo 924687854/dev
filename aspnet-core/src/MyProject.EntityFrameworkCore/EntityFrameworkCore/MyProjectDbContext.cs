@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using MyProject.Entities;
+using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.Data;
@@ -24,6 +26,17 @@ public class MyProjectDbContext :
     ITenantManagementDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
+
+    // MES 生产工单
+    public DbSet<ProductionOrder> ProductionOrders { get; set; }
+    public DbSet<ProductionOrderOperation> ProductionOrderOperations { get; set; }
+    public DbSet<ProductionOrderRouteChangeLog> ProductionOrderRouteChangeLogs { get; set; }
+
+    // 主数据
+    public DbSet<Product> Products { get; set; }
+    public DbSet<ProductionOrganization> ProductionOrganizations { get; set; }
+    public DbSet<ProcessRoute> ProcessRoutes { get; set; }
+    public DbSet<ProcessRouteOperation> ProcessRouteOperations { get; set; }
 
     #region Entities from the modules
 
@@ -76,11 +89,138 @@ public class MyProjectDbContext :
 
         /* Configure your own tables/entities inside here */
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(MyProjectConsts.DbTablePrefix + "YourEntities", MyProjectConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
+        // 生产工单
+        builder.Entity<ProductionOrder>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProductionOrders");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.OrderNo).IsRequired().HasMaxLength(64);
+            b.Property(x => x.Status).IsRequired();
+            b.Property(x => x.ProductCode).IsRequired().HasMaxLength(64);
+            b.Property(x => x.PlannedQuantity).IsRequired().HasPrecision(18, 4);
+            b.Property(x => x.Unit).IsRequired().HasMaxLength(32);
+            b.Property(x => x.ProductionOrganization).IsRequired().HasMaxLength(64);
+            b.Property(x => x.PlannedStartDate).IsRequired();
+            b.Property(x => x.PlannedEndDate);
+            b.Property(x => x.ProcessRouteId);
+            b.Property(x => x.ProcessRouteNo).IsRequired(false).HasMaxLength(64);
+            b.Property(x => x.ProcessRouteName).IsRequired(false).HasMaxLength(256);
+            b.Property(x => x.ErpSourceId).IsRequired(false).HasMaxLength(128);
+            b.Property(x => x.ErpSourceNo).IsRequired(false).HasMaxLength(128);
+
+            // 工单号唯一索引
+            b.HasIndex(x => x.OrderNo).IsUnique();
+            // ERP源单据id唯一索引（MySQL下UNIQUE索引天然允许多个NULL值，无需额外过滤条件）
+            b.HasIndex(x => x.ErpSourceId).IsUnique();
+
+            b.HasMany(x => x.Operations)
+                .WithOne()
+                .HasForeignKey(x => x.ProductionOrderId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 工序明细行
+        builder.Entity<ProductionOrderOperation>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProductionOrderOperations");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.OperationCode).IsRequired().HasMaxLength(64);
+            b.Property(x => x.SequenceNumber).IsRequired();
+            b.Property(x => x.OperationName).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Status).IsRequired();
+            b.Property(x => x.PlannedQuantity).IsRequired().HasPrecision(18, 4);
+            b.Property(x => x.PlannedStartDate).IsRequired();
+            b.Property(x => x.PlannedEndDate);
+            b.Property(x => x.ProductionOrderId).IsRequired();
+
+            // 工序识别码全场唯一
+            b.HasIndex(x => x.OperationCode).IsUnique();
+        });
+
+        // 工艺路线变更日志
+        builder.Entity<ProductionOrderRouteChangeLog>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProductionOrderRouteChangeLogs");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.ProductionOrderId).IsRequired();
+            b.Property(x => x.OldProcessRouteId);
+            b.Property(x => x.OldProcessRouteNo).IsRequired(false).HasMaxLength(64);
+            b.Property(x => x.OldProcessRouteName).IsRequired(false).HasMaxLength(256);
+            b.Property(x => x.NewProcessRouteId);
+            b.Property(x => x.NewProcessRouteNo).IsRequired(false).HasMaxLength(64);
+            b.Property(x => x.NewProcessRouteName).IsRequired(false).HasMaxLength(256);
+            b.Property(x => x.ChangeSource).IsRequired();
+
+            b.HasIndex(x => x.ProductionOrderId);
+        });
+
+        // 产品主数据
+        builder.Entity<Product>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "Products");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.Code).IsRequired().HasMaxLength(64);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Unit).IsRequired().HasMaxLength(32);
+
+            // 产品编码唯一
+            b.HasIndex(x => x.Code).IsUnique();
+        });
+
+        // 生产组织主数据
+        builder.Entity<ProductionOrganization>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProductionOrganizations");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.Code).IsRequired().HasMaxLength(64);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(256);
+
+            // 组织编码唯一
+            b.HasIndex(x => x.Code).IsUnique();
+        });
+
+        // 工艺路线主数据
+        builder.Entity<ProcessRoute>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProcessRoutes");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.ProductCode).IsRequired().HasMaxLength(64);
+            b.Property(x => x.ProductionOrganizationCode).IsRequired().HasMaxLength(64);
+            b.Property(x => x.RouteNo).IsRequired().HasMaxLength(64);
+            b.Property(x => x.RouteName).IsRequired().HasMaxLength(256);
+            b.Property(x => x.Version).IsRequired();
+            b.Property(x => x.EffectiveDate).IsRequired();
+            b.Property(x => x.ExpiryDate).IsRequired();
+
+            // 产品+组织+版本 唯一
+            b.HasIndex(x => new { x.ProductCode, x.ProductionOrganizationCode, x.Version }).IsUnique();
+            // 工艺路线号唯一
+            b.HasIndex(x => x.RouteNo).IsUnique();
+
+            b.HasMany(x => x.Operations)
+                .WithOne()
+                .HasForeignKey(x => x.ProcessRouteId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 工艺路线工序
+        builder.Entity<ProcessRouteOperation>(b =>
+        {
+            b.ToTable(MyProjectConsts.DbTablePrefix + "ProcessRouteOperations");
+            b.ConfigureByConvention();
+
+            b.Property(x => x.SequenceNumber).IsRequired();
+            b.Property(x => x.OperationCode).IsRequired().HasMaxLength(64);
+            b.Property(x => x.OperationName).IsRequired().HasMaxLength(256);
+            b.Property(x => x.ProcessRouteId).IsRequired();
+        });
     }
 }
